@@ -1,4 +1,5 @@
 from extensions import db
+from datetime import datetime
 
 
 
@@ -20,8 +21,10 @@ class Venue(db.Model):
     artists = db.relationship('Artist', secondary='shows', backref=db.backref('venue', lazy=True))
 
 
+
     def as_dict(self):
       return {'name': self.name, 'id': self.id}
+
 
 
 class Artist(db.Model):
@@ -40,12 +43,12 @@ class Artist(db.Model):
     seeking_description = db.Column(db.String(120))
 
 
-# class Show(db.Model):
-#   __tablename__ = 'shows'
+class Show(db.Model):
+  __tablename__ = 'shows'
   
-#   artist_id = db.Column(db.Integer, db.ForeignKey('artists.id'), primary_key=True)
-#   venue_id = db.Column(db.Integer, db.ForeignKey('venues.id'), primary_key=True)
-#   start_time = db.Column(db.DateTime, default=datetime.now())
+  artist_id = db.Column(db.Integer, db.ForeignKey('artists.id'), primary_key=True)
+  venue_id = db.Column(db.Integer, db.ForeignKey('venues.id'), primary_key=True)
+  start_time = db.Column(db.DateTime, default=datetime.now())
 
 
 #db.create_all()
