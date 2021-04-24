@@ -15,6 +15,7 @@ from forms import *
 from flask_migrate import Migrate
 from extensions import db
 from models import Venue, Artist, Show
+from sqlalchemy.orm import load_only
 
 #----------------------------------------------------------------------------#
 # App Config.
@@ -56,30 +57,31 @@ def index():
 
 @app.route('/venues')
 def venues():
-  # TODO: replace with real venues data.
-  #       num_shows should be aggregated based on number of upcoming shows per venue.
-  data=[{
-    "city": "San Francisco",
-    "state": "CA",
-    "venues": [{
-      "id": 1,
-      "name": "The Musical Hop",
-      "num_upcoming_shows": 0,
-    }, {
-      "id": 3,
-      "name": "Park Square Live Music & Coffee",
-      "num_upcoming_shows": 1,
-    }]
-  }, {
-    "city": "New York",
-    "state": "NY",
-    "venues": [{
-      "id": 2,
-      "name": "The Dueling Pianos Bar",
-      "num_upcoming_shows": 0,
-    }]
-  }]
-  return render_template('pages/venues.html', areas=data);
+
+  venue_data =[]
+  
+  # Select Distinct city, state where venues exist
+  locations = Venue.query.distinct(Venue.city, Venue.state).options(load_only('city', 'state')).all()
+
+  # Create Data Object organized per city
+  for city in locations:
+    venues = Venue.query.filter(Venue.city == city.city, Venue.state == city.state).options(load_only('id', 'name')).all()
+
+    venue_list = []
+    for venue in venues:
+        venue_entry = { "id": venue.id,
+      "name": venue.name,
+      "num_upcoming_shows": len(Show.query.filter(Show.venue_id == venue.id).all())}
+        venue_list.append(venue_entry)
+
+    newVenue = {"city": city.city,
+    "state": city.state,
+    "venues": venue_list}
+
+    venue_data.append(newVenue)
+
+  return render_template('pages/venues.html', areas=venue_data)
+
 
 @app.route('/venues/search', methods=['POST'])
 def search_venues():
