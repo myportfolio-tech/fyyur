@@ -87,11 +87,31 @@ def venues():
 def search_venues():
   
   search_term = request.form.get('search_term', '')
+  data =[]
+  
+  venues = Venue.query.filter(Venue.name.ilike(f'%{search_term}%')).all()
+  
+  for venue in venues:
+    artists_list = []
+    for artist in venue.artists:
+      entry = {
+        "id" : artist.id,
+        "name": artist.name}
+        
+      artists_list.append(entry)
 
-  venues = Venue.query.join(Show).join(Artist).filter(Venue.name.ilike(f'%{search_term}%')).all()
-  print(venues)
+    venue_list = {
+      "id": venue.id,
+      "name": venue.name,
+      "artists": artists_list}
 
-  return render_template('pages/search_venues.html', results=response, search_term=request.form.get('search_term', ''))
+    data.append(venue_list)
+
+  response={
+    "count": len(data),
+    "data": data}
+
+  return render_template('pages/search_venues.html', results=response, search_term=search_term)
 
 
 @app.route('/venues/<int:venue_id>')
