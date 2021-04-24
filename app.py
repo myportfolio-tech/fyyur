@@ -86,6 +86,8 @@ def venues():
 @app.route('/venues/search', methods=['POST'])
 def search_venues():
   
+  today = datetime.now()
+  
   search_term = request.form.get('search_term', '')
   data =[]
   
@@ -96,7 +98,7 @@ def search_venues():
     venue_list = {
       "id": venue.id,
       "name": venue.name,
-      "upcoming_shows_number": len(Show.query.filter(Show.venue_id == venue.id).filter(Show.start_time > datetime.now()).all())}
+      "upcoming_shows_number": len(Show.query.filter(Show.venue_id == venue.id).filter(Show.start_time > today ).all())}
 
     data.append(venue_list)
 
@@ -114,8 +116,8 @@ def show_venue(venue_id):
   
   ## Queries ##
   venue = Venue.query.get(venue_id)
-  upcoming_shows = db.session.query(Show).join(Artist).filter(Show.venue_id==venue_id).filter(Show.start_time > datetime.now()).all()
-  past_shows = db.session.query(Show).join(Artist).filter(Show.venue_id==venue_id).filter(Show.start_time < datetime.now()).all()
+  upcoming_shows = db.session.query(Show).join(Artist).filter(Show.venue_id==venue_id).filter(Show.start_time > today ).all()
+  past_shows = db.session.query(Show).join(Artist).filter(Show.venue_id==venue_id).filter(Show.start_time <  today ).all()
 
 
   results = {
@@ -198,12 +200,18 @@ def create_venue_submission():
 
 @app.route('/venues/<venue_id>', methods=['DELETE'])
 def delete_venue(venue_id):
-  # TODO: Complete this endpoint for taking a venue_id, and using
-  # SQLAlchemy ORM to delete a record. Handle cases where the session commit could fail.
 
-  # BONUS CHALLENGE: Implement a button to delete a Venue on a Venue Page, have it so that
-  # clicking that button delete it from the db then redirect the user to the homepage
-  return None
+  try:
+    venue = Venue.query.get(venue_id)
+    db.session.delete(venue)
+    db.session.commit()
+  except:
+    db.session.rollback()
+    flash(f'Unable to delete Venue: {venue.name}')
+  finally:
+    db.session.close()
+
+  return render_template('pages/home.html')
 
 #  Artists
 #  ----------------------------------------------------------------
